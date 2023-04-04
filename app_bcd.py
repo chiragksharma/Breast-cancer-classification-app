@@ -17,7 +17,13 @@ from sklearn.metrics import precision_score, recall_score
 from sklearn.metrics import confusion_matrix, roc_curve, precision_recall_curve, auc
 from sklearn.datasets import load_breast_cancer
 
-
+from img_classification import teachable_machine_classification
+from PIL import Image, ImageOps
+from tensorflow.keras.utils import load_img
+from tensorflow.keras.utils import img_to_array
+from tensorflow.keras.models import load_model
+import numpy as np
+import keras
 
 
 def main():
@@ -27,7 +33,7 @@ def main():
     st.image('tumor_icon.png',width=100)
     st.sidebar.title('Breast Cancer Detection')
     st.markdown('Cancer is Malignant or Benign? ')
-    navigation=st.sidebar.radio('VIEW', ('Data Analysis','Prediction'))
+    navigation=st.sidebar.radio('VIEW', ('Data Analysis','Prediction','Image Detection'))
     
     
     @st.cache(persist=True)
@@ -39,7 +45,8 @@ def main():
         for col in df.columns:
             df[col] = labelencoder.fit_transform(df[col])
         return df
-    
+
+
     @st.cache(persist=True)
     def split(df):
         y = df['target']
@@ -208,25 +215,7 @@ def main():
                 fig = plt.figure()
                 sns.scatterplot(x=df['mean smoothness'],y = df['mean area'],hue = df['target'],palette=['#000099','#ffff00'])
                 st.pyplot(fig)
-                        
-                    
-            
-            
-            
-            
-                
-            
-                
-        
-        
-            
-        
-        
-        
-        
-        
-        
-        
+
 ###---------------classification----------------------
     if navigation == 'Prediction':
         
@@ -348,14 +337,27 @@ def main():
                 st.write("Precision: ", precision_score(y_test, y_pred, labels=class_names).round(2))
                 st.write("Recall: ", recall_score(y_test, y_pred, labels=class_names).round(2))
                 plot_metrics(metrics)          
-    
-
-            
-    
 
 
 
+#------------------- Brain cancer detection ------------
 
+    if navigation == 'Image Detection':
+        st.title("Brain Tumor or Healthy Brain")
+        st.header("Brain Tumor MRI Classifier")
+        st.text("Upload a brain MRI Image for image classification as tumor or Healthy Brain")
+        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
+        if uploaded_file is not None:
+            image = Image.open(uploaded_file)
+            st.image(image, caption='Uploaded Image.', use_column_width=True)
+            st.write("Classifying...")
+
+            st.write("")
+            label = teachable_machine_classification(image, 'model.h5')
+            if label == 0:
+                st.write("The MRI scan detects a brain tumor")
+            else:
+                st.write("The MRI scan shows an healthy brain")
 
 
 if __name__ == '__main__':
